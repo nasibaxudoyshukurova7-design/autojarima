@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ car.plate }} – AutoJarima{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-title mb-1"><i class="fas fa-car me-2 text-primary"></i>{{ car.plate }}</h2>
+        <p class="text-muted mb-0">{{ car.brand }} • {{ car.year }} • {{ car.color }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'car_edit' car.pk %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-edit me-1"></i>Tahrirlash</a>
+        <a href="{% url 'car_delete' car.pk %}" class="btn btn-outline-danger btn-sm"><i class="fas fa-trash me-1"></i>O'chirish</a>
+    </div>
+</div>
+
+<!-- Statistika -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#e02424,#b91c1c);">
+            <div class="stat-number">{{ fines.filter.count|default:fines|length }}</div>
+            <div class="stat-label">Jami jarimalar</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#ff5722,#e64a19);">
+            <div class="stat-number">{{ unpaid|floatformat:0 }}</div>
+            <div class="stat-label">To'lanmagan (so'm)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#057a55,#065f46);">
+            <div class="stat-number">{{ paid|floatformat:0 }}</div>
+            <div class="stat-label">To'langan (so'm)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#1a56db,#1035a0);">
+            <div class="stat-number">{{ docs|length }}</div>
+            <div class="stat-label">Hujjatlar</div>
+        </div>
+    </div>
+</div>
+
+<!-- Hujjatlar -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#f8fafc;">
+        <span class="fw-bold"><i class="fas fa-file-alt me-2 text-primary"></i>Hujjatlar</span>
+        <a href="{% url 'doc_add' car.pk %}" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i>Hujjat qo'shish</a>
+    </div>
+    <div class="card-body p-0">
+        {% if docs %}
+        <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr>
+                <th>Turi</th><th>Nomi</th><th>Berilgan</th><th>Muddat</th><th>Holat</th><th>Amallar</th>
+            </tr></thead>
+            <tbody>
+            {% for doc in docs %}
+            <tr class="{% if doc.status == 'expired' %}table-danger{% elif doc.status == 'warning' %}table-warning{% endif %}">
+                <td><span class="badge bg-secondary">{{ doc.get_doc_type_display }}</span></td>
+                <td>{{ doc.name }}</td>
+                <td>{{ doc.issue_date }}</td>
+                <td>{{ doc.expiry_date }}</td>
+                <td>
+                    {% if doc.days_left < 0 %}
+                    <span class="days-badge days-expired"><i class="fas fa-times me-1"></i>{{ doc.days_left|slice:"1:" }} kun o'tgan</span>
+                    {% elif doc.days_left <= doc.remind_days %}
+                    <span class="days-badge days-warning"><i class="fas fa-clock me-1"></i>{{ doc.days_left }} kun qoldi</span>
+                    {% else %}
+                    <span class="days-badge days-ok"><i class="fas fa-check me-1"></i>{{ doc.days_left }} kun</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'doc_edit' doc.pk %}" class="btn btn-xs btn-outline-secondary btn-sm py-0 px-2"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'doc_delete' doc.pk %}" class="btn btn-xs btn-outline-danger btn-sm py-0 px-2"><i class="fas fa-trash"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted"><i class="fas fa-file-alt fa-2x mb-2"></i><br>Hujjat qo'shilmagan</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Jarimalar -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#f8fafc;">
+        <span class="fw-bold"><i class="fas fa-receipt me-2 text-danger"></i>Jarimalar</span>
+        <a href="{% url 'fine_add' %}" class="btn btn-sm btn-danger"><i class="fas fa-plus me-1"></i>Jarima qo'shish</a>
+    </div>
+    <div class="card-body p-0">
+        {% if fines %}
+        <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light"><tr>
+                <th>Sabab</th><th>Miqdor</th><th>Sana</th><th>To'lov muddati</th><th>Holat</th><th>Amallar</th>
+            </tr></thead>
+            <tbody>
+            {% for fine in fines %}
+            <tr>
+                <td>{{ fine.reason }}</td>
+                <td class="fw-semibold">{{ fine.amount|floatformat:0 }} so'm</td>
+                <td>{{ fine.fine_date }}</td>
+                <td>
+                    {{ fine.due_date }}
+                    {% if fine.status == 'unpaid' %}
+                        {% if fine.days_left < 0 %}
+                        <br><span class="days-badge days-expired">Kechikdi</span>
+                        {% elif fine.days_left <= 7 %}
+                        <br><span class="days-badge days-warning">{{ fine.days_left }} kun</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="status-badge status-{{ fine.status }}">{{ fine.get_status_display }}</span>
+                </td>
+                <td>
+                    {% if fine.status == 'unpaid' %}
+                    <a href="{% url 'fine_mark_paid' fine.pk %}" class="btn btn-sm btn-success py-0 px-2" onclick="return confirm('To\'langan deb belgilansinmi?')"><i class="fas fa-check"></i></a>
+                    {% endif %}
+                    <a href="{% url 'fine_edit' fine.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted"><i class="fas fa-receipt fa-2x mb-2"></i><br>Jarima qo'shilmagan</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

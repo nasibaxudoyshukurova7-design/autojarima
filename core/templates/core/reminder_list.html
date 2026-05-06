@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% block title %}Eslatmalar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title mb-0"><i class="fas fa-bell me-2 text-warning"></i>Eslatmalar</h2>
+    {% if unseen %}
+    <a href="{% url 'reminder_seen_all' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-check-double me-1"></i>Barchasini ko'rildi deb belgilash
+    </a>
+    {% endif %}
+</div>
+
+{% if unseen %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark fw-bold">
+        <i class="fas fa-exclamation-circle me-2"></i>Yangi eslatmalar ({{ unseen|length }})
+    </div>
+    <div class="list-group list-group-flush">
+        {% for r in unseen %}
+        <div class="list-group-item reminder-item d-flex justify-content-between align-items-start">
+            <div>
+                <span class="badge {% if r.reminder_type == 'document' %}bg-primary{% else %}bg-danger{% endif %} mb-1">
+                    {% if r.reminder_type == 'document' %}<i class="fas fa-file-alt me-1"></i>Hujjat{% else %}<i class="fas fa-receipt me-1"></i>Jarima{% endif %}
+                </span>
+                <p class="mb-1">{{ r.message }}</p>
+                <small class="text-muted">{{ r.created_at|date:"d.m.Y H:i" }}</small>
+            </div>
+            <a href="{% url 'reminder_seen' r.pk %}" class="btn btn-sm btn-outline-secondary ms-3 flex-shrink-0">
+                <i class="fas fa-eye me-1"></i>Ko'rildi
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success">
+    <i class="fas fa-check-circle me-2"></i>Barcha eslatmalar ko'rilgan. Yangi eslatma yo'q.
+</div>
+{% endif %}
+
+{% if seen %}
+<div class="card">
+    <div class="card-header fw-bold" style="background:#f8fafc;">
+        <i class="fas fa-history me-2"></i>Oldingi eslatmalar
+    </div>
+    <div class="list-group list-group-flush">
+        {% for r in seen %}
+        <div class="list-group-item d-flex justify-content-between align-items-start opacity-75">
+            <div>
+                <span class="badge {% if r.reminder_type == 'document' %}bg-secondary{% else %}bg-secondary{% endif %} mb-1">
+                    {% if r.reminder_type == 'document' %}Hujjat{% else %}Jarima{% endif %}
+                </span>
+                <p class="mb-1 text-muted">{{ r.message }}</p>
+                <small class="text-muted">{{ r.created_at|date:"d.m.Y H:i" }}</small>
+            </div>
+            <span class="badge bg-success ms-3"><i class="fas fa-check"></i> Ko'rildi</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

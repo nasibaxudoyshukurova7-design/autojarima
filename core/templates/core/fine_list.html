@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+{% block title %}Jarimalar{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title mb-0"><i class="fas fa-receipt me-2 text-danger"></i>Jarimalar</h2>
+    <a href="{% url 'fine_add' %}" class="btn btn-danger"><i class="fas fa-plus me-1"></i>Jarima qo'shish</a>
+</div>
+
+<!-- Filtr paneli -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Holat</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Barchasi</option>
+                    <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>To'lanmagan</option>
+                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>To'langan</option>
+                    <option value="disputed" {% if status_filter == 'disputed' %}selected{% endif %}>E'tirozda</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Avtomobil raqami</label>
+                <input type="text" name="car" class="form-control form-control-sm" value="{{ car_filter }}" placeholder="01A123AA">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Dan</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Gacha</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Qidiruv</label>
+                <input type="text" name="q" class="form-control form-control-sm" value="{{ search }}" placeholder="Sabab yoki raqam...">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fas fa-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if fines %}
+<div class="card">
+<div class="card-body p-0">
+<div class="table-responsive">
+<table class="table table-hover mb-0">
+    <thead class="table-light">
+    <tr>
+        <th>Avtomobil</th><th>Sabab</th><th>Miqdor</th><th>Jarima sanasi</th><th>To'lov muddati</th><th>Holat</th><th>Amallar</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for fine in fines %}
+    <tr class="{% if fine.is_overdue %}table-danger{% elif fine.status == 'unpaid' and fine.days_left <= 7 %}table-warning{% endif %}">
+        <td><a href="{% url 'car_detail' fine.car.pk %}" class="badge bg-secondary text-decoration-none">{{ fine.car.plate }}</a></td>
+        <td>
+            {{ fine.reason }}
+            {% if fine.image %}<br><a href="{{ fine.image.url }}" target="_blank" class="small text-primary"><i class="fas fa-paperclip"></i> Rasm</a>{% endif %}
+        </td>
+        <td class="fw-semibold {% if fine.status == 'unpaid' %}text-danger{% endif %}">{{ fine.amount|floatformat:0 }} so'm</td>
+        <td>{{ fine.fine_date }}</td>
+        <td>
+            {{ fine.due_date }}
+            {% if fine.status == 'unpaid' %}
+                {% if fine.days_left < 0 %}
+                <br><span class="days-badge days-expired">{{ fine.days_left|slice:"1:" }} kun kechikdi</span>
+                {% elif fine.days_left <= 7 %}
+                <br><span class="days-badge days-warning">{{ fine.days_left }} kun qoldi</span>
+                {% endif %}
+            {% endif %}
+        </td>
+        <td><span class="status-badge status-{{ fine.status }}">{{ fine.get_status_display }}</span></td>
+        <td>
+            <div class="d-flex gap-1">
+            {% if fine.status == 'unpaid' %}
+            <a href="{% url 'fine_mark_paid' fine.pk %}" class="btn btn-sm btn-success py-0 px-2" onclick="return confirm('To\'langan deb belgilansinmi?')" title="To'landi"><i class="fas fa-check"></i></a>
+            {% endif %}
+            <a href="{% url 'fine_edit' fine.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'fine_delete' fine.pk %}" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="fas fa-trash"></i></a>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+{% else %}
+<div class="card"><div class="card-body text-center py-5">
+    <i class="fas fa-receipt fa-4x text-muted mb-3"></i>
+    <h5 class="text-muted">Jarima topilmadi</h5>
+    <a href="{% url 'fine_add' %}" class="btn btn-danger mt-2"><i class="fas fa-plus me-1"></i>Jarima qo'shish</a>
+</div></div>
+{% endif %}
+{% endblock %}

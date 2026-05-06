@@ -1,0 +1,175 @@
+{% extends 'core/base.html' %}
+{% block title %}Bosh sahifa – AutoJarima{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-title mb-1"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Bosh sahifa</h2>
+        <p class="text-muted mb-0">Xush kelibsiz, <strong>{{ user.get_full_name|default:user.email }}</strong>!</p>
+    </div>
+</div>
+
+<!-- Eslatmalar baneri -->
+{% if unseen_reminders %}
+<div class="card mb-4" style="border-left: 5px solid #ff9900; background: #fffbeb;">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h6 class="fw-bold text-warning mb-2"><i class="fas fa-bell me-2"></i>Yangi eslatmalar ({{ unseen_reminders|length }})</h6>
+                {% for r in unseen_reminders %}
+                <div class="d-flex align-items-center mb-1">
+                    <span class="me-2">{{ r.message }}</span>
+                    <a href="{% url 'reminder_seen' r.pk %}" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem;">Ko'rildi</a>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{% url 'reminder_list' %}" class="btn btn-sm btn-warning ms-3">Barchasi</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistika kartochkalari -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg,#1a56db,#1035a0);">
+            <div class="stat-number">{{ cars_count }}</div>
+            <div class="stat-label"><i class="fas fa-car me-1"></i>Avtomobillar</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg,#e02424,#b91c1c);">
+            <div class="stat-number">{{ unpaid_count }}</div>
+            <div class="stat-label"><i class="fas fa-exclamation-circle me-1"></i>To'lanmagan jarima</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg,#057a55,#065f46);">
+            <div class="stat-number">{{ paid_count }}</div>
+            <div class="stat-label"><i class="fas fa-check-circle me-1"></i>To'langan jarima</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg,#ff9900,#d97706);">
+            <div class="stat-number">{{ expired_docs|length }}</div>
+            <div class="stat-label"><i class="fas fa-file-alt me-1"></i>Muddati o'tgan hujjat</div>
+        </div>
+    </div>
+</div>
+
+<!-- Moliya xulosa -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <i class="fas fa-money-bill-wave me-2"></i>To'lanmagan jarimalar
+            </div>
+            <div class="card-body">
+                <h3 class="text-danger fw-bold">{{ unpaid_total|floatformat:0 }} <small class="fs-6">so'm</small></h3>
+                <p class="text-muted mb-2">{{ unpaid_count }} ta jarima kutilmoqda</p>
+                {% if overdue_fines %}
+                <div class="alert alert-danger py-2 mb-2">
+                    <small><i class="fas fa-clock me-1"></i>{{ overdue_fines|length }} ta jarima muddati o'tib ketgan!</small>
+                </div>
+                {% endif %}
+                <a href="{% url 'fine_list' %}?status=unpaid" class="btn btn-sm btn-outline-danger">Ko'rish</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>To'langan jarimalar
+            </div>
+            <div class="card-body">
+                <h3 class="text-success fw-bold">{{ paid_total|floatformat:0 }} <small class="fs-6">so'm</small></h3>
+                <p class="text-muted mb-2">{{ paid_count }} ta jarima to'langan</p>
+                {% if disputed_count %}
+                <div class="alert alert-warning py-2 mb-2">
+                    <small><i class="fas fa-gavel me-1"></i>{{ disputed_count }} ta jarima e'tirozda</small>
+                </div>
+                {% endif %}
+                <a href="{% url 'fine_list' %}?status=paid" class="btn btn-sm btn-outline-success">Ko'rish</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hujjatlar holati -->
+{% if warning_docs or expired_docs %}
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <i class="fas fa-exclamation-triangle me-2"></i>Diqqat talab qiladigan hujjatlar
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light"><tr>
+                    <th>Avtomobil</th><th>Hujjat</th><th>Muddat</th><th>Holat</th>
+                </tr></thead>
+                <tbody>
+                {% for doc in expired_docs %}
+                <tr class="table-danger">
+                    <td><span class="badge bg-secondary">{{ doc.car.plate }}</span></td>
+                    <td>{{ doc.get_doc_type_display }}</td>
+                    <td>{{ doc.expiry_date }}</td>
+                    <td><span class="days-badge days-expired">{{ doc.days_left }} kun o'tgan</span></td>
+                </tr>
+                {% endfor %}
+                {% for doc in warning_docs %}
+                <tr class="table-warning">
+                    <td><span class="badge bg-secondary">{{ doc.car.plate }}</span></td>
+                    <td>{{ doc.get_doc_type_display }}</td>
+                    <td>{{ doc.expiry_date }}</td>
+                    <td><span class="days-badge days-warning">{{ doc.days_left }} kun qoldi</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Avtomobillar ro'yxati -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#f8fafc;">
+        <span class="fw-bold"><i class="fas fa-car me-2 text-primary"></i>Mening avtomobillarim</span>
+        <a href="{% url 'car_add' %}" class="btn btn-sm btn-primary"><i class="fas fa-plus me-1"></i>Qo'shish</a>
+    </div>
+    <div class="card-body">
+        {% if cars %}
+        <div class="row g-3">
+            {% for car in cars %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border h-100" style="border-radius:12px;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h5 class="fw-bold mb-1">{{ car.plate }}</h5>
+                                <p class="text-muted mb-1">{{ car.brand }} • {{ car.year }}</p>
+                                <p class="text-muted mb-0"><i class="fas fa-circle me-1" style="color:{{ car.color }};font-size:0.7rem;"></i>{{ car.color }}</p>
+                            </div>
+                            <div class="text-end">
+                                <a href="{% url 'car_detail' car.pk %}" class="btn btn-sm btn-primary mb-1">Ko'rish</a>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex gap-2 small text-muted">
+                            <span><i class="fas fa-file-alt me-1"></i>{{ car.documents.count }} hujjat</span>
+                            <span><i class="fas fa-receipt me-1"></i>{{ car.fines.count }} jarima</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-car fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Hali avtomobil qo'shilmagan.</p>
+            <a href="{% url 'car_add' %}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Avtomobil qo'shish</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

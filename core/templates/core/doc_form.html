@@ -1,0 +1,50 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-8 col-lg-6">
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <i class="fas fa-file-alt me-2"></i>{{ title }}
+        <small class="ms-2 opacity-75">– {{ car.plate }} ({{ car.brand }})</small>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Hujjat turi</label>
+                {{ form.doc_type }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Hujjat nomi</label>
+                {{ form.name }}
+            </div>
+            <div class="row">
+                <div class="col mb-3">
+                    <label class="form-label fw-semibold">Berilgan sana</label>
+                    {{ form.issue_date }}
+                </div>
+                <div class="col mb-3">
+                    <label class="form-label fw-semibold">Amal qilish muddati</label>
+                    {{ form.expiry_date }}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Necha kun oldin eslatish</label>
+                {{ form.remind_days }}
+                <div class="form-text">Muddat tugashidan qancha kun oldin eslatma yuborilsin</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Izoh</label>
+                {{ form.note }}
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="fas fa-save me-1"></i>Saqlash</button>
+                <a href="{% url 'car_detail' car.pk %}" class="btn btn-outline-secondary">Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
